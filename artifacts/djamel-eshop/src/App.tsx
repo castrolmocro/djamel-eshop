@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useRef } from "react";
 import { AppProviders } from "./contexts";
 import { AppLayout } from "./components/layout/AppLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Import pages
 import Home from "./pages/home";
@@ -20,7 +21,14 @@ import OrdersPage from "./pages/orders";
 import ProfilePage from "./pages/profile";
 import NotFound from "./pages/not-found";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -202,14 +210,16 @@ function ClerkProviderWithRoutes() {
 
 function App() {
   return (
-    <AppProviders>
-      <TooltipProvider>
-        <WouterRouter base={basePath}>
-          <ClerkProviderWithRoutes />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </AppProviders>
+    <ErrorBoundary>
+      <AppProviders>
+        <TooltipProvider>
+          <WouterRouter base={basePath}>
+            <ClerkProviderWithRoutes />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AppProviders>
+    </ErrorBoundary>
   );
 }
 
