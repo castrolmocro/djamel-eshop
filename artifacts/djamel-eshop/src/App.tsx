@@ -1,4 +1,4 @@
-import { ClerkProvider, SignIn, SignUp, useUser, useClerk } from "@clerk/react";
+import { ClerkProvider, useUser, useClerk } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
@@ -12,6 +12,8 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ShoppingBag } from "lucide-react";
 
 import Home from "./pages/home";
+import SignInPage from "./pages/sign-in";
+import SignUpPage from "./pages/sign-up";
 import ListingsPage from "./pages/listings";
 import ListingDetail from "./pages/listing-detail";
 import CreateListingPage from "./pages/create-listing";
@@ -57,50 +59,6 @@ function stripBase(path: string): string {
 const clerkAppearance = {
   theme: shadcn,
   cssLayerName: "clerk",
-  options: {
-    logoPlacement: "inside" as const,
-    logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/favicon.svg`,
-  },
-  variables: {
-    colorPrimary: "hsl(15 80% 55%)",
-    colorForeground: "hsl(20 14% 15%)",
-    colorMutedForeground: "hsl(25 10% 40%)",
-    colorDanger: "hsl(0 75% 50%)",
-    colorBackground: "hsl(0 0% 100%)",
-    colorInput: "hsl(30 15% 95%)",
-    colorInputForeground: "hsl(20 14% 15%)",
-    colorNeutral: "hsl(30 15% 85%)",
-    fontFamily: "'Outfit', sans-serif",
-    borderRadius: "0.75rem",
-  },
-  elements: {
-    rootBox: "w-full flex justify-center",
-    cardBox: "bg-white dark:bg-zinc-950 rounded-2xl w-[440px] max-w-full overflow-hidden shadow-xl border",
-    card: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    headerTitle: "text-2xl font-bold text-foreground",
-    headerSubtitle: "text-muted-foreground",
-    socialButtonsBlockButtonText: "text-foreground font-medium",
-    formFieldLabel: "text-sm font-medium text-foreground",
-    footerActionLink: "text-primary hover:text-primary/80 font-medium",
-    footerActionText: "text-muted-foreground",
-    dividerText: "text-muted-foreground",
-    identityPreviewEditButton: "text-primary hover:text-primary/80",
-    formFieldSuccessText: "text-green-600",
-    alertText: "text-destructive",
-    logoBox: "h-12 flex justify-center mb-4",
-    logoImage: "h-full w-auto",
-    socialButtonsBlockButton: "border-input bg-background hover:bg-muted transition-colors",
-    formButtonPrimary: "bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm",
-    formFieldInput: "bg-background border-input text-foreground focus:ring-2 focus:ring-ring focus:border-transparent",
-    footerAction: "mt-6",
-    dividerLine: "bg-border",
-    alert: "bg-destructive/10 border-destructive/20",
-    otpCodeFieldInput: "border-input bg-background",
-    formFieldRow: "mb-4",
-    main: "px-8 py-6",
-  },
 };
 
 function LoadingSpinner() {
@@ -138,30 +96,6 @@ function ClerkMissingPage() {
           احصل على مفتاح Clerk مجاناً
         </a>
       </div>
-    </div>
-  );
-}
-
-function SignInPage() {
-  return (
-    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-muted/30 px-4 py-12">
-      <SignIn
-        routing="virtual"
-        signUpUrl={`${basePath}/sign-up`}
-        fallbackRedirectUrl={`${basePath}/`}
-      />
-    </div>
-  );
-}
-
-function SignUpPage() {
-  return (
-    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-muted/30 px-4 py-12">
-      <SignUp
-        routing="virtual"
-        signInUrl={`${basePath}/sign-in`}
-        fallbackRedirectUrl={`${basePath}/`}
-      />
     </div>
   );
 }
@@ -213,20 +147,6 @@ function ClerkProviderWithRoutes() {
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
-      localization={{
-        signIn: {
-          start: {
-            title: "مرحباً بعودتك",
-            subtitle: "سجّل دخولك للوصول إلى حسابك",
-          },
-        },
-        signUp: {
-          start: {
-            title: "انضم إلى السوق المحلي",
-            subtitle: "أنشئ حساباً للبيع والشراء",
-          },
-        },
-      }}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
@@ -235,8 +155,8 @@ function ClerkProviderWithRoutes() {
         <AppLayout>
           <Switch>
             <Route path="/" component={HomeRedirect} />
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
+            <Route path="/sign-in" component={SignInPage} />
+            <Route path="/sign-up" component={SignUpPage} />
             <Route path="/listings/create" component={() => <ProtectedRoute><CreateListingPage /></ProtectedRoute>} />
             <Route path="/listings/:listingId" component={() => <ListingDetail />} />
             <Route path="/listings" component={ListingsPage} />
