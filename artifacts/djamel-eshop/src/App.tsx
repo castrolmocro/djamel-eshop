@@ -9,8 +9,8 @@ import { useEffect, useRef } from "react";
 import { AppProviders } from "./contexts";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ShoppingBag } from "lucide-react";
 
-// Import pages
 import Home from "./pages/home";
 import ListingsPage from "./pages/listings";
 import ListingDetail from "./pages/listing-detail";
@@ -30,22 +30,28 @@ const queryClient = new QueryClient({
   },
 });
 
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
+let clerkPubKey: string | undefined;
+let clerkInitError: string | null = null;
+
+try {
+  clerkPubKey = publishableKeyFromHost(
+    window.location.hostname,
+    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+  );
+  if (!clerkPubKey) {
+    clerkInitError = "VITE_CLERK_PUBLISHABLE_KEY is not configured.";
+  }
+} catch (e: any) {
+  clerkInitError = e?.message ?? "Failed to initialize auth.";
+}
 
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+const basePath = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
     ? path.slice(basePath.length) || "/"
     : path;
-}
-
-if (!clerkPubKey) {
-  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
 }
 
 const clerkAppearance = {
@@ -96,6 +102,37 @@ const clerkAppearance = {
     main: "px-8 py-6",
   },
 };
+
+function ClerkMissingPage() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground px-4">
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="flex justify-center">
+          <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <ShoppingBag className="h-10 w-10 text-primary" />
+          </div>
+        </div>
+        <div>
+          <h1 className="text-3xl font-black mb-2 gradient-text">Djamel E Shop</h1>
+          <p className="text-muted-foreground text-sm">السوق المحلي الجزائري</p>
+        </div>
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-200 text-start space-y-2" dir="rtl">
+          <p className="font-semibold">⚙️ إعداد مطلوب</p>
+          <p>يجب إضافة متغير البيئة <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">VITE_CLERK_PUBLISHABLE_KEY</code> لتشغيل نظام المصادقة.</p>
+          <p className="text-xs opacity-70 mt-1">Configure <strong>VITE_CLERK_PUBLISHABLE_KEY</strong> in your Railway environment variables.</p>
+        </div>
+        <a
+          href="https://clerk.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          احصل على مفتاح Clerk مجاناً
+        </a>
+      </div>
+    </div>
+  );
+}
 
 function SignInPage() {
   return (
@@ -164,7 +201,7 @@ function ClerkProviderWithRoutes() {
 
   return (
     <ClerkProvider
-      publishableKey={clerkPubKey}
+      publishableKey={clerkPubKey!}
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
@@ -172,14 +209,14 @@ function ClerkProviderWithRoutes() {
       localization={{
         signIn: {
           start: {
-            title: "Welcome back to Djamel E Shop",
-            subtitle: "Sign in to access your account",
+            title: "مرحباً بعودتك",
+            subtitle: "سجّل دخولك للوصول إلى حسابك",
           },
         },
         signUp: {
           start: {
-            title: "Join the local market",
-            subtitle: "Create an account to start buying and selling",
+            title: "انضم إلى السوق المحلي",
+            subtitle: "أنشئ حساباً للبيع والشراء",
           },
         },
       }}
@@ -209,6 +246,14 @@ function ClerkProviderWithRoutes() {
 }
 
 function App() {
+  if (clerkInitError || !clerkPubKey) {
+    return (
+      <AppProviders>
+        <ClerkMissingPage />
+      </AppProviders>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <AppProviders>

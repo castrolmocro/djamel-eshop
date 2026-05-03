@@ -7,6 +7,7 @@ import ordersRouter from "./orders";
 import messagesRouter from "./messages";
 import reviewsRouter from "./reviews";
 import dashboardRouter from "./dashboard";
+import seedRouter from "./seed";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(ordersRouter);
 router.use(messagesRouter);
 router.use(reviewsRouter);
 router.use(dashboardRouter);
+router.use(seedRouter);
 
 export default router;
