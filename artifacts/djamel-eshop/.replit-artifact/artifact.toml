@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Djamel E Shop"
+version = "1.0.0"
+id = "artifacts/djamel-eshop"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25078
+
+[services.development]
+run = "pnpm --filter @workspace/djamel-eshop run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/djamel-eshop", "run", "build" ]
+publicDir = "artifacts/djamel-eshop/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25078"
+BASE_PATH = "/"
