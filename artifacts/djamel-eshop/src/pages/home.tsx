@@ -66,7 +66,16 @@ export default function Home() {
 
   const categoriesContent = (() => {
     if (isLoadingCategories) return Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />);
-    if (!Array.isArray(categories) || categories.length === 0) return null;
+    if (!Array.isArray(categories) || categories.length === 0) {
+      return (
+        <div className="col-span-full flex flex-col items-center justify-center py-10 text-muted-foreground gap-2">
+          <ShoppingBag className="h-8 w-8 opacity-20" />
+          <p className="text-sm">
+            {language === "ar" ? "لا توجد تصنيفات بعد" : language === "fr" ? "Aucune catégorie" : "No categories yet"}
+          </p>
+        </div>
+      );
+    }
     return categories.map((category, i) => {
       const IconComp = ICON_MAP[category.icon] ?? ShoppingBag;
       const colorClass = CATEGORY_COLORS[category.slug] ?? CATEGORY_COLORS.other;
@@ -97,7 +106,7 @@ export default function Home() {
         <ListingCard key={listing.id} listing={listing} index={i} language={language} />
       ));
     }
-    return <EmptyState label={language === "ar" ? "لا توجد إعلانات مميزة" : language === "fr" ? "Aucune annonce en vedette" : "No featured listings yet"} />;
+    return <EmptyState label={language === "ar" ? "لا توجد إعلانات مميزة بعد" : language === "fr" ? "Aucune annonce en vedette" : "No featured listings yet"} />;
   })();
 
   const nearbyContent = (() => {
@@ -107,7 +116,7 @@ export default function Home() {
         <ListingCard key={listing.id} listing={listing} index={i} language={language} />
       ));
     }
-    return <EmptyState label={language === "ar" ? "لا توجد إعلانات قريبة" : language === "fr" ? "Aucune annonce à proximité" : "No nearby listings"} />;
+    return <EmptyState label={language === "ar" ? "لا توجد إعلانات قريبة بعد" : language === "fr" ? "Aucune annonce à proximité" : "No nearby listings yet"} />;
   })();
 
   return (

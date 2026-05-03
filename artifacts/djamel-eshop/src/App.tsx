@@ -1,4 +1,4 @@
-import { ClerkProvider, SignIn, SignUp, Show, useUser, useClerk } from "@clerk/react";
+import { ClerkProvider, SignIn, SignUp, useUser, useClerk } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
@@ -103,6 +103,14 @@ const clerkAppearance = {
   },
 };
 
+function LoadingSpinner() {
+  return (
+    <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+      <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
 function ClerkMissingPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground px-4">
@@ -151,27 +159,18 @@ function SignUpPage() {
 }
 
 function HomeRedirect() {
-  return (
-    <>
-      <Show when="signed-in">
-        <Redirect to="/dashboard" />
-      </Show>
-      <Show when="signed-out">
-        <Home />
-      </Show>
-    </>
-  );
+  const { isLoaded, isSignedIn } = useUser();
+  if (isLoaded && isSignedIn) {
+    return <Redirect to="/dashboard" />;
+  }
+  return <Home />;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <Show when="signed-in">{children}</Show>
-      <Show when="signed-out">
-        <Redirect to="/sign-in" />
-      </Show>
-    </>
-  );
+  const { isLoaded, isSignedIn } = useUser();
+  if (!isLoaded) return <LoadingSpinner />;
+  if (!isSignedIn) return <Redirect to="/sign-in" />;
+  return <>{children}</>;
 }
 
 function ClerkQueryClientCacheInvalidator() {
