@@ -64,6 +64,52 @@ export default function Home() {
 
   const ArrowIcon = dir === "rtl" ? ArrowLeft : ArrowRight;
 
+  const categoriesContent = (() => {
+    if (isLoadingCategories) return Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />);
+    if (!Array.isArray(categories) || categories.length === 0) return null;
+    return categories.map((category, i) => {
+      const IconComp = ICON_MAP[category.icon] ?? ShoppingBag;
+      const colorClass = CATEGORY_COLORS[category.slug] ?? CATEGORY_COLORS.other;
+      return (
+        <Link key={category.id} href={`/listings?categoryId=${category.id}`}>
+          <Card
+            className={`card-hover cursor-pointer group bg-gradient-to-br ${colorClass} border h-full`}
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-3 h-full min-h-[7rem]">
+              <div className="h-11 w-11 rounded-xl category-icon-ring flex items-center justify-center">
+                <IconComp className="h-5 w-5" />
+              </div>
+              <span className="font-semibold text-xs leading-tight">
+                {language === "ar" ? category.nameAr : language === "fr" ? category.nameFr : category.nameEn}
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+      );
+    });
+  })();
+
+  const featuredContent = (() => {
+    if (isLoadingFeatured) return Array(3).fill(0).map((_, i) => <ListingCardSkeleton key={i} />);
+    if (Array.isArray(featuredListings) && featuredListings.length > 0) {
+      return featuredListings.map((listing, i) => (
+        <ListingCard key={listing.id} listing={listing} index={i} language={language} />
+      ));
+    }
+    return <EmptyState label={language === "ar" ? "لا توجد إعلانات مميزة" : language === "fr" ? "Aucune annonce en vedette" : "No featured listings yet"} />;
+  })();
+
+  const nearbyContent = (() => {
+    if (isLoadingNearby) return Array(3).fill(0).map((_, i) => <ListingCardSkeleton key={i} />);
+    if (Array.isArray(nearbyListings) && nearbyListings.length > 0) {
+      return nearbyListings.map((listing, i) => (
+        <ListingCard key={listing.id} listing={listing} index={i} language={language} />
+      ));
+    }
+    return <EmptyState label={language === "ar" ? "لا توجد إعلانات قريبة" : language === "fr" ? "Aucune annonce à proximité" : "No nearby listings"} />;
+  })();
+
   return (
     <div className="flex flex-col min-h-screen">
 
@@ -163,29 +209,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-4">
-          {isLoadingCategories
-            ? Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
-            : categories?.map((category, i) => {
-                const IconComp = ICON_MAP[category.icon] ?? ShoppingBag;
-                const colorClass = CATEGORY_COLORS[category.slug] ?? CATEGORY_COLORS.other;
-                return (
-                  <Link key={category.id} href={`/listings?categoryId=${category.id}`}>
-                    <Card
-                      className={`card-hover cursor-pointer group bg-gradient-to-br ${colorClass} border h-full`}
-                      style={{ animationDelay: `${i * 60}ms` }}
-                    >
-                      <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-3 h-full min-h-[7rem]">
-                        <div className={`h-11 w-11 rounded-xl category-icon-ring flex items-center justify-center`}>
-                          <IconComp className="h-5 w-5" />
-                        </div>
-                        <span className="font-semibold text-xs leading-tight">
-                          {language === "ar" ? category.nameAr : language === "fr" ? category.nameFr : category.nameEn}
-                        </span>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
+          {categoriesContent}
         </div>
       </section>
 
@@ -213,14 +237,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {isLoadingFeatured
-              ? Array(3).fill(0).map((_, i) => <ListingCardSkeleton key={i} />)
-              : featuredListings && featuredListings.length > 0
-              ? featuredListings.map((listing, i) => (
-                  <ListingCard key={listing.id} listing={listing} index={i} language={language} />
-                ))
-              : <EmptyState label={language === "ar" ? "لا توجد إعلانات مميزة" : language === "fr" ? "Aucune annonce en vedette" : "No featured listings yet"} />
-            }
+            {featuredContent}
           </div>
         </div>
       </section>
@@ -256,14 +273,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {isLoadingNearby
-            ? Array(3).fill(0).map((_, i) => <ListingCardSkeleton key={i} />)
-            : nearbyListings && nearbyListings.length > 0
-            ? nearbyListings.map((listing, i) => (
-                <ListingCard key={listing.id} listing={listing} index={i} language={language} />
-              ))
-            : <EmptyState label={language === "ar" ? "لا توجد إعلانات قريبة" : language === "fr" ? "Aucune annonce à proximité" : "No nearby listings"} />
-          }
+          {nearbyContent}
         </div>
       </section>
     </div>
