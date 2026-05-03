@@ -13,8 +13,8 @@ export function Navbar() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
 
-  const signedOut = isLoaded && !isSignedIn;
   const signedIn = isLoaded && isSignedIn;
+  const signedOut = !signedIn;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
