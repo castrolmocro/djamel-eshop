@@ -1,0 +1,9 @@
+[phases.build]
+cmds = [
+  "pnpm add -g node-gyp",
+  "pnpm install --frozen-lockfile",
+  "pnpm --filter @workspace/djamel-eshop build"
+]
+
+[deploy]
+startCmd = "pnpm --filter @workspace/djamel-eshop serve"
