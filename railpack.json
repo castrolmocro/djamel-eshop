@@ -5,6 +5,14 @@
       "commands": [
         "pnpm install --no-frozen-lockfile"
       ]
+    },
+    "build": {
+      "commands": [
+        "pnpm --filter @workspace/djamel-eshop build"
+      ]
     }
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @workspace/djamel-eshop serve"
   }
 }
