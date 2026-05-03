@@ -57,7 +57,7 @@ export default function ListingsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{label("كل الفئات", "Toutes catégories", "All categories")}</SelectItem>
-            {categories?.map((cat: any) => (
+            {Array.isArray(categories) && categories.map((cat: any) => (
               <SelectItem key={cat.id} value={String(cat.id)}>
                 {language === "ar" ? cat.nameAr : language === "fr" ? cat.nameFr : cat.nameEn}
               </SelectItem>
