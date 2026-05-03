@@ -13,6 +13,6 @@
     }
   },
   "deploy": {
-    "startCommand": "pnpm --filter @workspace/djamel-eshop serve"
+    "spaOutputDir": "artifacts/djamel-eshop/dist/public"
   }
 }
