@@ -1,13 +1,14 @@
-import { ClerkProvider, useUser, useClerk } from "@clerk/react";
-import { publishableKeyFromHost } from "@clerk/react/internal";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { AppProviders } from "./contexts";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { isSupabaseConfigured } from "./lib/supabase";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { ShoppingBag } from "lucide-react";
 
 import Home from "./pages/home";
@@ -33,27 +34,7 @@ const queryClient = new QueryClient({
   },
 });
 
-let clerkPubKey: string | undefined;
-let clerkInitError: string | null = null;
-
-try {
-  clerkPubKey = publishableKeyFromHost(
-    window.location.hostname,
-    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-  );
-  if (!clerkPubKey) clerkInitError = "VITE_CLERK_PUBLISHABLE_KEY is not configured.";
-} catch (e: any) {
-  clerkInitError = e?.message ?? "Failed to initialize auth.";
-}
-
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 const basePath = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-
-function stripBase(path: string): string {
-  return basePath && path.startsWith(basePath)
-    ? path.slice(basePath.length) || "/"
-    : path;
-}
 
 function LoadingSpinner() {
   return (
@@ -63,7 +44,7 @@ function LoadingSpinner() {
   );
 }
 
-function ClerkMissingPage() {
+function SupabaseMissingPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground px-4">
       <div className="max-w-md w-full text-center space-y-6">
@@ -72,11 +53,18 @@ function ClerkMissingPage() {
             <ShoppingBag className="h-10 w-10 text-primary" />
           </div>
         </div>
-        <h1 className="text-3xl font-black gradient-text">Djamel E Shop</h1>
+        <h1 className="text-3xl font-black">Djamel E Shop</h1>
         <p className="text-muted-foreground text-sm">السوق المحلي الجزائري</p>
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-200 text-start" dir="rtl">
-          <p className="font-semibold mb-1">⚙️ إعداد مطلوب</p>
-          <p>يجب إضافة <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">VITE_CLERK_PUBLISHABLE_KEY</code> في متغيرات البيئة.</p>
+          <p className="font-semibold mb-2">⚙️ إعداد Supabase مطلوب</p>
+          <p className="mb-2">يجب إضافة متغيرات البيئة في ملف <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">.env</code> أو إعدادات Replit:</p>
+          <ul className="list-disc list-inside space-y-1 text-xs font-mono">
+            <li>VITE_SUPABASE_URL</li>
+            <li>VITE_SUPABASE_ANON_KEY</li>
+            <li>SUPABASE_JWT_SECRET</li>
+            <li>DATABASE_URL</li>
+          </ul>
+          <p className="mt-3 text-xs">راجع ملف <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">.env.example</code> للتفاصيل.</p>
         </div>
       </div>
     </div>
@@ -84,77 +72,56 @@ function ClerkMissingPage() {
 }
 
 function HomeRedirect() {
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoaded, isSignedIn } = useAuth();
   if (isLoaded && isSignedIn) return <Redirect to="/dashboard" />;
   return <Home />;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoaded, isSignedIn } = useAuth();
   if (!isLoaded) return <LoadingSpinner />;
   if (!isSignedIn) return <Redirect to="/sign-in" />;
   return <>{children}</>;
 }
 
-function ClerkQueryClientCacheInvalidator() {
-  const { addListener } = useClerk();
-  const qc = useQueryClient();
-  const prevUserIdRef = useRef<string | null | undefined>(undefined);
-
+function AuthTokenSync() {
+  const { getToken } = useAuth();
   useEffect(() => {
-    const unsubscribe = addListener(({ user }) => {
-      const userId = user?.id ?? null;
-      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
-        qc.clear();
-      }
-      prevUserIdRef.current = userId;
-    });
-    return unsubscribe;
-  }, [addListener, qc]);
-
+    setAuthTokenGetter(getToken);
+    return () => setAuthTokenGetter(null);
+  }, [getToken]);
   return null;
 }
 
-function ClerkProviderWithRoutes() {
-  const [, setLocation] = useLocation();
-
+function AppRoutes() {
   return (
-    <ClerkProvider
-      publishableKey={clerkPubKey!}
-      proxyUrl={clerkProxyUrl}
-      signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
-      routerPush={(to) => setLocation(stripBase(to))}
-      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
-    >
-      <QueryClientProvider client={queryClient}>
-        <ClerkQueryClientCacheInvalidator />
-        <AppLayout>
-          <Switch>
-            <Route path="/" component={HomeRedirect} />
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
-            <Route path="/listings/create" component={() => <ProtectedRoute><CreateListingPage /></ProtectedRoute>} />
-            <Route path="/listings/:listingId" component={() => <ListingDetail />} />
-            <Route path="/listings" component={ListingsPage} />
-            <Route path="/dashboard" component={() => <ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/messages" component={() => <ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-            <Route path="/orders" component={() => <ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-            <Route path="/profile" component={() => <ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/profiles/:userId" component={() => <PublicProfilePage />} />
-            <Route component={NotFound} />
-          </Switch>
-        </AppLayout>
-      </QueryClientProvider>
-    </ClerkProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthTokenSync />
+      <AppLayout>
+        <Switch>
+          <Route path="/" component={HomeRedirect} />
+          <Route path="/sign-in/*?" component={SignInPage} />
+          <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/listings/create" component={() => <ProtectedRoute><CreateListingPage /></ProtectedRoute>} />
+          <Route path="/listings/:listingId" component={() => <ListingDetail />} />
+          <Route path="/listings" component={ListingsPage} />
+          <Route path="/dashboard" component={() => <ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/messages" component={() => <ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+          <Route path="/orders" component={() => <ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+          <Route path="/profile" component={() => <ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/profiles/:userId" component={() => <PublicProfilePage />} />
+          <Route component={NotFound} />
+        </Switch>
+      </AppLayout>
+    </QueryClientProvider>
   );
 }
 
 function App() {
-  if (clerkInitError || !clerkPubKey) {
+  if (!isSupabaseConfigured) {
     return (
       <AppProviders>
-        <ClerkMissingPage />
+        <SupabaseMissingPage />
       </AppProviders>
     );
   }
@@ -162,12 +129,14 @@ function App() {
   return (
     <ErrorBoundary>
       <AppProviders>
-        <TooltipProvider>
-          <WouterRouter base={basePath}>
-            <ClerkProviderWithRoutes />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <WouterRouter base={basePath}>
+              <AppRoutes />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
       </AppProviders>
     </ErrorBoundary>
   );

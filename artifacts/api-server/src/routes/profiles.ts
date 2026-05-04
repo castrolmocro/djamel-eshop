@@ -1,18 +1,10 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
+import { requireAuth } from "../middlewares/supabaseAuthMiddleware";
 import { db } from "@workspace/db";
 import { profilesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const router = Router();
-
-const requireAuth = (req: any, res: any, next: any) => {
-  const auth = getAuth(req);
-  const userId = auth?.sessionClaims?.userId || auth?.userId;
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
-  req.userId = userId;
-  next();
-};
 
 router.get("/profiles/me", requireAuth, async (req: any, res) => {
   try {

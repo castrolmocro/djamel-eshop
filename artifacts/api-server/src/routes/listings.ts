@@ -1,18 +1,10 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
+import { requireAuth } from "../middlewares/supabaseAuthMiddleware";
 import { db } from "@workspace/db";
 import { listingsTable, profilesTable, categoriesTable, reviewsTable } from "@workspace/db";
 import { eq, and, gte, lte, ilike, or, sql, desc } from "drizzle-orm";
 
 const router = Router();
-
-const requireAuth = (req: any, res: any, next: any) => {
-  const auth = getAuth(req);
-  const userId = auth?.sessionClaims?.userId || auth?.userId;
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
-  req.userId = userId;
-  next();
-};
 
 async function enrichListing(listing: any) {
   const [sellerProfile] = await db.select().from(profilesTable).where(eq(profilesTable.clerkUserId, listing.sellerUserId));

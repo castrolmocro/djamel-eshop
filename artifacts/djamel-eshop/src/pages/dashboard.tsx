@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ShoppingBag, TrendingUp, MessageCircle, Package,
   Star, Plus, Eye, ArrowRight, ArrowLeft, Clock
@@ -13,7 +13,7 @@ import {
 
 export default function Dashboard() {
   const { language, dir } = useI18n();
-  const { user } = useUser();
+  const { user } = useAuth();
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: activity, isLoading: actLoading } = useGetRecentActivity();
   const { data: myListings, isLoading: listingsLoading } = useGetMyListings();
@@ -47,7 +47,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">
-            {label(`مرحباً، ${user?.firstName || ""}`, `Bienvenue, ${user?.firstName || ""}`, `Welcome, ${user?.firstName || ""}`)}
+            {label(`مرحباً، ${user?.user_metadata?.first_name || ""}`, `Bienvenue, ${user?.user_metadata?.first_name || ""}`, `Welcome, ${user?.user_metadata?.first_name || ""}`)}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">{label("هذه لوحة تحكمك", "Votre tableau de bord", "Your dashboard overview")}</p>
         </div>

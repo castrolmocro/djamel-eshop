@@ -4,10 +4,10 @@
 منصة سوق محلي جزائري تتيح للأفراد والمتاجر والمصانع نشر منتجاتهم وخدماتهم.
 
 ## التقنيات الأساسية
-- **Frontend**: React 19 + Vite + TypeScript + Tailwind CSS v4 + Wouter + Clerk + TanStack Query
-- **Backend**: Express.js + TypeScript + Clerk Express
+- **Frontend**: React 19 + Vite + TypeScript + Tailwind CSS v4 + Wouter + Supabase Auth + TanStack Query
+- **Backend**: Express.js + TypeScript + Supabase JWT verification (jsonwebtoken)
 - **Database**: PostgreSQL + Drizzle ORM
-- **Auth**: Clerk (email/password + verification)
+- **Auth**: Supabase Auth (email/password + OTP email verification)
 - **Monorepo**: pnpm workspaces
 
 ## هيكل المشروع
@@ -18,9 +18,6 @@ lib/db/                   → قاعدة البيانات + Schema
 lib/api-spec/             → OpenAPI spec (orval codegen)
 lib/api-client-react/     → React Query hooks (auto-generated)
 ```
-
-## الملف الأساسي للوثائق
-راجع `ARCHITECTURE.md` للشرح الكامل للبنية والملفات.
 
 ## الصفحات
 - `/` — الرئيسية
@@ -35,7 +32,7 @@ lib/api-client-react/     → React Query hooks (auto-generated)
 - `/profiles/:userId` — الملف العام لأي مستخدم
 
 ## جداول قاعدة البيانات
-profiles, listings, categories, orders, conversations, reviews, follows
+profiles (clerkUserId column now stores Supabase UUIDs), listings, categories, orders, conversations, reviews, follows, notifications
 
 ## ألوان الموقع (حافظ عليها)
 - Primary: برتقالي `hsl(15 85% 52%)`
@@ -43,17 +40,28 @@ profiles, listings, categories, orders, conversations, reviews, follows
 - Violet: `violet-600` للأزرار عند اكتمال النماذج
 
 ## متغيرات البيئة المطلوبة
-- `VITE_CLERK_PUBLISHABLE_KEY` (frontend)
-- `VITE_API_URL` (frontend)
-- `DATABASE_URL` (backend)
-- `CLERK_SECRET_KEY` (backend)
+انسخ `.env.example` إلى `.env` وأدخل قيم Supabase:
 
-## آخر التحديثات (مايو 2026)
-- إصلاح زر إنشاء الحساب (يتحول بنفسجي عند اكتمال البيانات)
-- إضافة صفحات البروفايل العامة `/profiles/:userId`
-- إضافة نظام المتابعة (follow/unfollow + stats)
-- تحسين الـ Navbar (active states + mobile sidebar محسّن)
-- إضافة أنميشن جديدة (fadeInUp, scaleIn, shake, float, glow, stagger)
-- تحسين صفحتي تسجيل الدخول والتسجيل
-- إضافة `follows` table في قاعدة البيانات
-- إضافة API routes للمتابعة وإحصائيات البروفايل
+### Frontend (Vite)
+- `VITE_SUPABASE_URL` — رابط مشروع Supabase
+- `VITE_SUPABASE_ANON_KEY` — المفتاح العام (anon key)
+
+### Backend
+- `SUPABASE_JWT_SECRET` — من Supabase Dashboard → Settings → API → JWT Settings
+- `DATABASE_URL` — رابط قاعدة بيانات PostgreSQL
+
+### الاختياري
+- `VITE_API_URL` — يُترك فارغاً في التطوير (Vite proxy يتولى /api)
+- `PORT` — المنفذ للخادم (افتراضي: 8080)
+
+## نظام المصادقة (Supabase)
+- **Frontend**: `@supabase/supabase-js` — `src/lib/supabase.ts` + `src/contexts/AuthContext.tsx`
+- **Backend**: JWT verification using `jsonwebtoken` — `src/middlewares/supabaseAuthMiddleware.ts`
+- **Token flow**: Frontend gets Supabase JWT → sends as `Authorization: Bearer <token>` → backend verifies with `SUPABASE_JWT_SECRET`
+- **User properties**: `user.id` (UUID), `user.email`, `user.user_metadata.first_name`, `user.user_metadata.full_name`, `user.user_metadata.avatar_url`
+
+## تدفق العمل
+```
+pnpm --filter @workspace/djamel-eshop dev    → Frontend (port 5000)
+pnpm --filter @workspace/api-server dev       → Backend (port 8080)
+```

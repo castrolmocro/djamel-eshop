@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { useI18n } from "@/contexts/I18nContext";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +35,7 @@ type TabKey = "listings" | "about" | "followers" | "following";
 export default function PublicProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { language, dir } = useI18n();
-  const { user: currentUser, isSignedIn } = useUser();
+  const { user: currentUser, isSignedIn } = useAuth();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<any>(null);

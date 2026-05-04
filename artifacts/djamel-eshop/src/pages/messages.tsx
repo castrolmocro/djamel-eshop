@@ -8,11 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, MessageCircle, User } from "lucide-react";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function MessagesPage() {
   const { language, dir } = useI18n();
-  const { user } = useUser();
+  const { user } = useAuth();
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
   const [newMsg, setNewMsg] = useState("");
 

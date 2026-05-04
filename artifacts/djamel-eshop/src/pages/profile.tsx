@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "wouter";
 import {
   User, Save, MapPin, Store, Globe, Phone, Instagram, Facebook,
@@ -32,7 +32,7 @@ type TabKey = "personal" | "location" | "store" | "social";
 
 export default function ProfilePage() {
   const { language, dir } = useI18n();
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const { data: profile, isLoading } = useGetMyProfile();
   const updateProfile = useUpdateMyProfile();
@@ -64,7 +64,7 @@ export default function ProfilePage() {
     if (p) {
       const social = (p.socialLinks as any) || {};
       setForm({
-        displayName: p.displayName || user?.fullName || "",
+        displayName: p.displayName || user?.user_metadata?.full_name || "",
         bio: p.bio || "",
         phone: p.phone || "",
         wilaya: p.wilaya || "",

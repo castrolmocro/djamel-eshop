@@ -2,7 +2,7 @@ import { useI18n } from "@/contexts/I18nContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { useUser, useClerk } from "@clerk/react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Menu, Moon, Sun, Languages, Search, Plus, User, LogOut,
   LayoutDashboard, ShoppingBag, MessageCircle, Package, Home,
@@ -19,8 +19,13 @@ import { useState, useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API_BASE}/api${path}`, { credentials: "include", ...options });
+async function apiFetch(path: string, options?: RequestInit, token?: string | null) {
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const res = await fetch(`${API_BASE}/api${path}`, {
+    credentials: "include",
+    ...options,
+    headers: { ...authHeaders, ...(options?.headers as Record<string, string> || {}) },
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -51,8 +56,7 @@ function timeAgo(dateStr: string, lang: string) {
 export function Navbar() {
   const { t, language, setLanguage, dir } = useI18n();
   const { theme, setTheme } = useTheme();
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { signOut } = useClerk();
+  const { isLoaded, isSignedIn, user, session, signOut } = useAuth();
   const [location] = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -67,9 +71,10 @@ export function Navbar() {
     let cancelled = false;
     async function fetchNotifs() {
       try {
+        const tok = session?.access_token;
         const [notifs, countRes] = await Promise.all([
-          apiFetch("/notifications?limit=10"),
-          apiFetch("/notifications/unread-count"),
+          apiFetch("/notifications?limit=10", undefined, tok),
+          apiFetch("/notifications/unread-count", undefined, tok),
         ]);
         if (!cancelled) {
           setNotifications(Array.isArray(notifs) ? notifs : []);
@@ -84,7 +89,7 @@ export function Navbar() {
 
   const markAllRead = async () => {
     try {
-      await apiFetch("/notifications/mark-all-read", { method: "PUT" });
+      await apiFetch("/notifications/mark-all-read", { method: "PUT" }, session?.access_token);
       setNotifications(n => n.map(x => ({ ...x, isRead: true })));
       setUnreadCount(0);
     } catch {}
@@ -237,7 +242,7 @@ export function Navbar() {
                         onClick={async () => {
                           if (!notif.isRead) {
                             try {
-                              await apiFetch(`/notifications/${notif.id}/read`, { method: "PUT" });
+                              await apiFetch(`/notifications/${notif.id}/read`, { method: "PUT" }, session?.access_token);
                               setNotifications(n => n.map(x => x.id === notif.id ? { ...x, isRead: true } : x));
                               setUnreadCount(c => Math.max(0, c - 1));
                             } catch {}
@@ -306,8 +311,8 @@ export function Navbar() {
                     size="icon"
                     className="rounded-full h-9 w-9 border-2 border-primary/20 hover:border-primary/50 overflow-hidden transition-all p-0"
                   >
-                    {user?.imageUrl
-                      ? <img src={user.imageUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    {user?.user_metadata?.avatar_url
+                      ? <img src={user.user_metadata.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
                       : <User className="h-4 w-4 m-auto" />
                     }
                   </Button>
@@ -315,14 +320,14 @@ export function Navbar() {
                 <DropdownMenuContent align={dir === 'rtl' ? "start" : "end"} className="w-56">
                   <div className="flex items-center gap-3 p-3 border-b bg-muted/30 rounded-t-lg">
                     <div className="h-9 w-9 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0 border">
-                      {user?.imageUrl
-                        ? <img src={user.imageUrl} alt="" className="h-full w-full object-cover" />
+                      {user?.user_metadata?.avatar_url
+                        ? <img src={user.user_metadata.avatar_url} alt="" className="h-full w-full object-cover" />
                         : <User className="h-4 w-4 text-muted-foreground" />
                       }
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate">{user?.fullName ?? user?.firstName}</p>
-                      <p className="text-xs text-muted-foreground truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+                      <p className="font-semibold text-sm truncate">{user?.user_metadata?.full_name ?? user?.user_metadata?.first_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                     </div>
                   </div>
 
@@ -387,14 +392,14 @@ export function Navbar() {
               {signedIn && (
                 <div className="flex items-center gap-3 p-4 border-b bg-muted/30">
                   <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border flex items-center justify-center shrink-0">
-                    {user?.imageUrl
-                      ? <img src={user.imageUrl} alt="" className="h-full w-full object-cover" />
+                    {user?.user_metadata?.avatar_url
+                      ? <img src={user.user_metadata.avatar_url} alt="" className="h-full w-full object-cover" />
                       : <User className="h-5 w-5 text-muted-foreground" />
                     }
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm truncate">{user?.fullName ?? user?.firstName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+                    <p className="font-semibold text-sm truncate">{user?.user_metadata?.full_name ?? user?.user_metadata?.first_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                   {unreadCount > 0 && (
                     <Badge variant="destructive" className="text-xs shrink-0">{unreadCount}</Badge>

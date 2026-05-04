@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useI18n } from "@/contexts/I18nContext";
 import { useParams, Link } from "wouter";
 import { useGetListing, useGetListingReviews, useCreateConversation } from "@workspace/api-client-react";
-import { useUser } from "@clerk/react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import { useLocation } from "wouter";
 export default function ListingDetail() {
   const { listingId } = useParams<{ listingId: string }>();
   const { language, dir } = useI18n();
-  const { isSignedIn } = useUser();
+  const { isSignedIn } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [imageIdx, setImageIdx] = useState(0);
