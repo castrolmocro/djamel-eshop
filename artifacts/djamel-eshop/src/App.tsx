@@ -1,5 +1,4 @@
 import { ClerkProvider, useUser, useClerk } from "@clerk/react";
-import { shadcn } from "@clerk/themes";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -21,14 +20,12 @@ import Dashboard from "./pages/dashboard";
 import MessagesPage from "./pages/messages";
 import OrdersPage from "./pages/orders";
 import ProfilePage from "./pages/profile";
+import PublicProfilePage from "./pages/public-profile";
 import NotFound from "./pages/not-found";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
+    queries: { retry: false, refetchOnWindowFocus: false },
   },
 });
 
@@ -40,9 +37,7 @@ try {
     window.location.hostname,
     import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
   );
-  if (!clerkPubKey) {
-    clerkInitError = "VITE_CLERK_PUBLISHABLE_KEY is not configured.";
-  }
+  if (!clerkPubKey) clerkInitError = "VITE_CLERK_PUBLISHABLE_KEY is not configured.";
 } catch (e: any) {
   clerkInitError = e?.message ?? "Failed to initialize auth.";
 }
@@ -55,11 +50,6 @@ function stripBase(path: string): string {
     ? path.slice(basePath.length) || "/"
     : path;
 }
-
-const clerkAppearance = {
-  theme: shadcn,
-  cssLayerName: "clerk",
-};
 
 function LoadingSpinner() {
   return (
@@ -78,23 +68,12 @@ function ClerkMissingPage() {
             <ShoppingBag className="h-10 w-10 text-primary" />
           </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-black mb-2 gradient-text">Djamel E Shop</h1>
-          <p className="text-muted-foreground text-sm">السوق المحلي الجزائري</p>
+        <h1 className="text-3xl font-black gradient-text">Djamel E Shop</h1>
+        <p className="text-muted-foreground text-sm">السوق المحلي الجزائري</p>
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-200 text-start" dir="rtl">
+          <p className="font-semibold mb-1">⚙️ إعداد مطلوب</p>
+          <p>يجب إضافة <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">VITE_CLERK_PUBLISHABLE_KEY</code> في متغيرات البيئة.</p>
         </div>
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-200 text-start space-y-2" dir="rtl">
-          <p className="font-semibold">⚙️ إعداد مطلوب</p>
-          <p>يجب إضافة متغير البيئة <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">VITE_CLERK_PUBLISHABLE_KEY</code> لتشغيل نظام المصادقة.</p>
-          <p className="text-xs opacity-70 mt-1">Configure <strong>VITE_CLERK_PUBLISHABLE_KEY</strong> in your Railway environment variables.</p>
-        </div>
-        <a
-          href="https://clerk.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          احصل على مفتاح Clerk مجاناً
-        </a>
       </div>
     </div>
   );
@@ -102,9 +81,7 @@ function ClerkMissingPage() {
 
 function HomeRedirect() {
   const { isLoaded, isSignedIn } = useUser();
-  if (isLoaded && isSignedIn) {
-    return <Redirect to="/dashboard" />;
-  }
+  if (isLoaded && isSignedIn) return <Redirect to="/dashboard" />;
   return <Home />;
 }
 
@@ -123,10 +100,7 @@ function ClerkQueryClientCacheInvalidator() {
   useEffect(() => {
     const unsubscribe = addListener(({ user }) => {
       const userId = user?.id ?? null;
-      if (
-        prevUserIdRef.current !== undefined &&
-        prevUserIdRef.current !== userId
-      ) {
+      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
         qc.clear();
       }
       prevUserIdRef.current = userId;
@@ -144,7 +118,6 @@ function ClerkProviderWithRoutes() {
     <ClerkProvider
       publishableKey={clerkPubKey!}
       proxyUrl={clerkProxyUrl}
-      appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       routerPush={(to) => setLocation(stripBase(to))}
@@ -155,8 +128,8 @@ function ClerkProviderWithRoutes() {
         <AppLayout>
           <Switch>
             <Route path="/" component={HomeRedirect} />
-            <Route path="/sign-in" component={SignInPage} />
-            <Route path="/sign-up" component={SignUpPage} />
+            <Route path="/sign-in/*?" component={SignInPage} />
+            <Route path="/sign-up/*?" component={SignUpPage} />
             <Route path="/listings/create" component={() => <ProtectedRoute><CreateListingPage /></ProtectedRoute>} />
             <Route path="/listings/:listingId" component={() => <ListingDetail />} />
             <Route path="/listings" component={ListingsPage} />
@@ -164,6 +137,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/messages" component={() => <ProtectedRoute><MessagesPage /></ProtectedRoute>} />
             <Route path="/orders" component={() => <ProtectedRoute><OrdersPage /></ProtectedRoute>} />
             <Route path="/profile" component={() => <ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/profiles/:userId" component={() => <PublicProfilePage />} />
             <Route component={NotFound} />
           </Switch>
         </AppLayout>
