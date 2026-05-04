@@ -5,7 +5,7 @@ import { Eye, EyeOff, Loader2, ShoppingBag, CheckCircle, Shield, Zap } from "luc
 
 const basePath = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
-type OAuthProvider = "oauth_google" | "oauth_facebook" | "oauth_twitter" | "oauth_tiktok";
+type OAuthProvider = "oauth_google" | "oauth_facebook" | "oauth_twitter";
 
 const oauthProviders: { id: OAuthProvider; label: string; icon: React.ReactNode }[] = [
   {
@@ -35,15 +35,6 @@ const oauthProviders: { id: OAuthProvider; label: string; icon: React.ReactNode 
     icon: (
       <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden fill="currentColor">
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-      </svg>
-    ),
-  },
-  {
-    id: "oauth_tiktok",
-    label: "TikTok",
-    icon: (
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden fill="currentColor">
-        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.22 8.22 0 004.79 1.52V6.76a4.85 4.85 0 01-1.02-.07z"/>
       </svg>
     ),
   },
