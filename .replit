@@ -33,8 +33,8 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=3000 pnpm --filter @workspace/djamel-eshop dev"
-waitForPort = 3000
+args = "PORT=5000 pnpm --filter @workspace/djamel-eshop dev"
+waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Backend API"
@@ -49,7 +49,7 @@ args = "PORT=8080 pnpm --filter @workspace/api-server dev"
 waitForPort = 8080
 
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
 
 [postMerge]
@@ -65,18 +65,20 @@ localPort = 8080
 externalPort = 8080
 
 [[ports]]
-localPort = 8081
-externalPort = 80
-
-[[ports]]
 localPort = 25078
 externalPort = 3000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
 
 [userenv]
 
 [userenv.shared]
 VITE_CLERK_PUBLISHABLE_KEY = "pk_test_cHJlY2lzZS1qYXliaXJkLTguY2xlcmsuYWNjb3VudHMuZGV2JA"
 CLERK_PUBLISHABLE_KEY = "pk_test_cHJlY2lzZS1qYXliaXJkLTguY2xlcmsuYWNjb3VudHMuZGV2JA"
+VITE_API_URL = ""
+PORT = "5000"
 
 [nix]
 channel = "stable-25_05"
