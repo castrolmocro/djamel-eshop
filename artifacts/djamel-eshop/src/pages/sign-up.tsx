@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useSignUp } from "@clerk/react";
+import { useState, useEffect } from "react";
+import { useSignUp, useClerk } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { Eye, EyeOff, Loader2, ShoppingBag, CheckCircle2, Star, TrendingUp, Users } from "lucide-react";
 
@@ -44,9 +44,20 @@ type Step = "form" | "verify" | "done";
 
 export default function SignUpPage() {
   const { signUp, setActive } = useSignUp();
+  const { handleRedirectCallback } = useClerk();
   const [, navigate] = useLocation();
 
   const [step, setStep] = useState<Step>("form");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("__clerk_status")) {
+      handleRedirectCallback({
+        afterSignInUrl: `${basePath}/`,
+        afterSignUpUrl: `${basePath}/`,
+      }).catch(() => {});
+    }
+  }, []);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");

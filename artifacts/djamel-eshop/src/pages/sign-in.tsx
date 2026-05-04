@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useSignIn } from "@clerk/react";
+import { useState, useEffect } from "react";
+import { useSignIn, useClerk } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { Eye, EyeOff, Loader2, ShoppingBag, CheckCircle, Shield, Zap } from "lucide-react";
 
@@ -42,6 +42,7 @@ const oauthProviders: { id: OAuthProvider; label: string; icon: React.ReactNode 
 
 export default function SignInPage() {
   const { signIn, setActive } = useSignIn();
+  const { handleRedirectCallback } = useClerk();
   const [, navigate] = useLocation();
 
   const [email, setEmail] = useState("");
@@ -50,6 +51,16 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("__clerk_status")) {
+      handleRedirectCallback({
+        afterSignInUrl: `${basePath}/`,
+        afterSignUpUrl: `${basePath}/`,
+      }).catch(() => {});
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

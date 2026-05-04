@@ -25,7 +25,11 @@ import NotFound from "./pages/not-found";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: false, refetchOnWindowFocus: false },
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 2,
+    },
   },
 });
 
